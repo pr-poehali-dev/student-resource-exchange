@@ -3,6 +3,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
 
 const Index = () => {
@@ -10,6 +15,15 @@ const Index = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('Все');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'rating' | 'downloads' | 'newest'>('rating');
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [uploadForm, setUploadForm] = useState({
+    title: '',
+    category: '',
+    type: '',
+    description: '',
+    file: null as File | null
+  });
+  const { toast } = useToast();
 
   const allMaterials = [
     {
@@ -96,6 +110,33 @@ const Index = () => {
     { name: 'IT', count: 198, color: 'bg-primary' },
     { name: 'Химия', count: 87, color: 'bg-secondary' }
   ];
+
+  const handleUploadSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!uploadForm.title || !uploadForm.category || !uploadForm.type || !uploadForm.description) {
+      toast({
+        title: 'Ошибка',
+        description: 'Пожалуйста, заполните все поля',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
+    toast({
+      title: 'Успешно!',
+      description: 'Ваш материал успешно загружен и отправлен на модерацию',
+    });
+    
+    setUploadModalOpen(false);
+    setUploadForm({
+      title: '',
+      category: '',
+      type: '',
+      description: '',
+      file: null
+    });
+  };
 
   const renderStars = (rating: number) => {
     const stars = [];
@@ -380,10 +421,138 @@ const Index = () => {
                 Загружай лабораторные работы, конспекты и проекты. 
                 Помоги другим студентам учиться эффективнее!
               </p>
-              <Button size="lg" className="bg-white text-primary hover:bg-gray-100">
-                <Icon name="Upload" size={20} className="mr-2" />
-                Загрузить материал
-              </Button>
+              <Dialog open={uploadModalOpen} onOpenChange={setUploadModalOpen}>
+                <DialogTrigger asChild>
+                  <Button size="lg" className="bg-white text-primary hover:bg-gray-100">
+                    <Icon name="Upload" size={20} className="mr-2" />
+                    Загрузить материал
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                      Загрузить материал
+                    </DialogTitle>
+                    <DialogDescription>
+                      Поделись своими лабораторными работами, конспектами и проектами с другими студентами
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <form onSubmit={handleUploadSubmit} className="space-y-6 mt-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="title" className="text-base font-semibold">
+                        Название материала *
+                      </Label>
+                      <Input 
+                        id="title"
+                        placeholder="Например: Алгоритмы сортировки"
+                        value={uploadForm.title}
+                        onChange={(e) => setUploadForm({...uploadForm, title: e.target.value})}
+                        className="h-12"
+                      />
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="category" className="text-base font-semibold">
+                          Категория *
+                        </Label>
+                        <Select value={uploadForm.category} onValueChange={(value) => setUploadForm({...uploadForm, category: value})}>
+                          <SelectTrigger className="h-12">
+                            <SelectValue placeholder="Выберите категорию" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Программирование">Программирование</SelectItem>
+                            <SelectItem value="Математика">Математика</SelectItem>
+                            <SelectItem value="Физика">Физика</SelectItem>
+                            <SelectItem value="Экономика">Экономика</SelectItem>
+                            <SelectItem value="IT">IT</SelectItem>
+                            <SelectItem value="Химия">Химия</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="type" className="text-base font-semibold">
+                          Тип материала *
+                        </Label>
+                        <Select value={uploadForm.type} onValueChange={(value) => setUploadForm({...uploadForm, type: value})}>
+                          <SelectTrigger className="h-12">
+                            <SelectValue placeholder="Выберите тип" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Лабораторная работа">Лабораторная работа</SelectItem>
+                            <SelectItem value="Конспект">Конспект</SelectItem>
+                            <SelectItem value="Проект">Проект</SelectItem>
+                            <SelectItem value="Презентация">Презентация</SelectItem>
+                            <SelectItem value="Реферат">Реферат</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="description" className="text-base font-semibold">
+                        Описание *
+                      </Label>
+                      <Textarea 
+                        id="description"
+                        placeholder="Опишите содержание вашего материала..."
+                        value={uploadForm.description}
+                        onChange={(e) => setUploadForm({...uploadForm, description: e.target.value})}
+                        rows={4}
+                        className="resize-none"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="file" className="text-base font-semibold">
+                        Файл
+                      </Label>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-primary transition-colors cursor-pointer">
+                        <Icon name="Upload" size={48} className="mx-auto mb-4 text-gray-400" />
+                        <p className="text-sm text-gray-600 mb-2">
+                          Нажмите для выбора файла или перетащите его сюда
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          PDF, DOC, DOCX, PPT, PPTX (макс. 10MB)
+                        </p>
+                        <Input 
+                          id="file"
+                          type="file"
+                          className="hidden"
+                          accept=".pdf,.doc,.docx,.ppt,.pptx"
+                          onChange={(e) => setUploadForm({...uploadForm, file: e.target.files?.[0] || null})}
+                        />
+                        {uploadForm.file && (
+                          <Badge className="mt-4" variant="secondary">
+                            <Icon name="FileText" size={14} className="mr-1" />
+                            {uploadForm.file.name}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => setUploadModalOpen(false)}
+                      >
+                        Отмена
+                      </Button>
+                      <Button 
+                        type="submit" 
+                        className="flex-1 bg-gradient-to-r from-primary to-secondary text-white hover:opacity-90"
+                      >
+                        <Icon name="Upload" size={18} className="mr-2" />
+                        Загрузить
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </div>
           </CardContent>
         </Card>
