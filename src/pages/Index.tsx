@@ -9,6 +9,7 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState('home');
   const [selectedCategory, setSelectedCategory] = useState<string>('Все');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'rating' | 'downloads' | 'newest'>('rating');
 
   const allMaterials = [
     {
@@ -73,12 +74,19 @@ const Index = () => {
     }
   ];
 
-  const filteredMaterials = allMaterials.filter(material => {
-    const matchesCategory = selectedCategory === 'Все' || material.category === selectedCategory;
-    const matchesSearch = material.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         material.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  const filteredMaterials = allMaterials
+    .filter(material => {
+      const matchesCategory = selectedCategory === 'Все' || material.category === selectedCategory;
+      const matchesSearch = material.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           material.description.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'rating') return b.rating - a.rating;
+      if (sortBy === 'downloads') return b.downloads - a.downloads;
+      if (sortBy === 'newest') return b.id - a.id;
+      return 0;
+    });
 
   const categories = [
     { name: 'Программирование', count: 234, color: 'bg-primary' },
@@ -241,7 +249,7 @@ const Index = () => {
 
       {/* Materials Grid */}
       <section className="container mx-auto px-6 py-12">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <h3 className="text-3xl font-bold flex items-center gap-3">
             <Icon name="TrendingUp" size={32} className="text-secondary" />
             {selectedCategory === 'Все' ? 'Популярные материалы' : `Материалы: ${selectedCategory}`}
@@ -249,16 +257,47 @@ const Index = () => {
               {filteredMaterials.length}
             </Badge>
           </h3>
-          {selectedCategory !== 'Все' && (
-            <Button 
-              variant="outline" 
-              className="border-2"
-              onClick={() => setSelectedCategory('Все')}
-            >
-              <Icon name="X" size={18} className="mr-2" />
-              Сбросить фильтр
-            </Button>
-          )}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 bg-white rounded-lg border-2 border-gray-200 p-1">
+              <Button 
+                size="sm"
+                variant={sortBy === 'rating' ? 'default' : 'ghost'}
+                onClick={() => setSortBy('rating')}
+                className={sortBy === 'rating' ? 'bg-gradient-to-r from-primary to-secondary text-white' : ''}
+              >
+                <Icon name="Star" size={16} className="mr-1" />
+                Рейтинг
+              </Button>
+              <Button 
+                size="sm"
+                variant={sortBy === 'downloads' ? 'default' : 'ghost'}
+                onClick={() => setSortBy('downloads')}
+                className={sortBy === 'downloads' ? 'bg-gradient-to-r from-primary to-secondary text-white' : ''}
+              >
+                <Icon name="TrendingUp" size={16} className="mr-1" />
+                Популярность
+              </Button>
+              <Button 
+                size="sm"
+                variant={sortBy === 'newest' ? 'default' : 'ghost'}
+                onClick={() => setSortBy('newest')}
+                className={sortBy === 'newest' ? 'bg-gradient-to-r from-primary to-secondary text-white' : ''}
+              >
+                <Icon name="Clock" size={16} className="mr-1" />
+                Новые
+              </Button>
+            </div>
+            {selectedCategory !== 'Все' && (
+              <Button 
+                variant="outline" 
+                className="border-2"
+                onClick={() => setSelectedCategory('Все')}
+              >
+                <Icon name="X" size={18} className="mr-2" />
+                Сбросить
+              </Button>
+            )}
+          </div>
         </div>
 
         {filteredMaterials.length === 0 ? (
