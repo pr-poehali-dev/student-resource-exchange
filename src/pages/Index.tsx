@@ -7,8 +7,10 @@ import Icon from '@/components/ui/icon';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('home');
+  const [selectedCategory, setSelectedCategory] = useState<string>('Все');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const materials = [
+  const allMaterials = [
     {
       id: 1,
       title: 'Алгоритмы сортировки',
@@ -48,8 +50,35 @@ const Index = () => {
       downloads: 156,
       type: 'Презентация',
       description: 'Современные тренды мировой экономики и их влияние на развивающиеся рынки'
+    },
+    {
+      id: 5,
+      title: 'Линейная алгебра',
+      category: 'Математика',
+      author: 'Ольга Волкова',
+      rating: 4.7,
+      downloads: 178,
+      type: 'Лабораторная работа',
+      description: 'Решение систем линейных уравнений методом Гаусса'
+    },
+    {
+      id: 6,
+      title: 'Органическая химия',
+      category: 'Химия',
+      author: 'Михаил Соколов',
+      rating: 4.3,
+      downloads: 95,
+      type: 'Конспект',
+      description: 'Основные реакции органических соединений'
     }
   ];
+
+  const filteredMaterials = allMaterials.filter(material => {
+    const matchesCategory = selectedCategory === 'Все' || material.category === selectedCategory;
+    const matchesSearch = material.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         material.description.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   const categories = [
     { name: 'Программирование', count: 234, color: 'bg-primary' },
@@ -133,6 +162,8 @@ const Index = () => {
               <Input
                 placeholder="Найди материалы по любой теме..."
                 className="pl-12 h-14 text-lg border-2 border-gray-200 focus:border-primary"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             <Button size="lg" className="h-14 px-8 bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-white">
@@ -166,11 +197,34 @@ const Index = () => {
           <Icon name="FolderOpen" size={32} className="text-primary" />
           Популярные категории
         </h3>
+        <div className="flex gap-3 mb-6 overflow-x-auto pb-2">
+          <Button
+            variant={selectedCategory === 'Все' ? 'default' : 'outline'}
+            onClick={() => setSelectedCategory('Все')}
+            className={selectedCategory === 'Все' ? 'bg-gradient-to-r from-primary to-secondary text-white' : ''}
+          >
+            <Icon name="Grid3x3" size={18} className="mr-2" />
+            Все
+          </Button>
+          {categories.map((cat) => (
+            <Button
+              key={cat.name}
+              variant={selectedCategory === cat.name ? 'default' : 'outline'}
+              onClick={() => setSelectedCategory(cat.name)}
+              className={selectedCategory === cat.name ? 'bg-gradient-to-r from-primary to-secondary text-white' : ''}
+            >
+              {cat.name}
+            </Button>
+          ))}
+        </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {categories.map((cat, idx) => (
             <Card
               key={cat.name}
-              className="hover:shadow-xl transition-all duration-300 cursor-pointer hover:-translate-y-1 animate-scale-in"
+              onClick={() => setSelectedCategory(cat.name)}
+              className={`hover:shadow-xl transition-all duration-300 cursor-pointer hover:-translate-y-1 animate-scale-in ${
+                selectedCategory === cat.name ? 'ring-2 ring-primary' : ''
+              }`}
               style={{ animationDelay: `${idx * 0.1}s` }}
             >
               <CardContent className="p-6 text-center">
@@ -190,16 +244,35 @@ const Index = () => {
         <div className="flex items-center justify-between mb-8">
           <h3 className="text-3xl font-bold flex items-center gap-3">
             <Icon name="TrendingUp" size={32} className="text-secondary" />
-            Популярные материалы
+            {selectedCategory === 'Все' ? 'Популярные материалы' : `Материалы: ${selectedCategory}`}
+            <Badge variant="secondary" className="text-lg">
+              {filteredMaterials.length}
+            </Badge>
           </h3>
-          <Button variant="outline" className="border-2">
-            Смотреть все
-            <Icon name="ArrowRight" size={18} className="ml-2" />
-          </Button>
+          {selectedCategory !== 'Все' && (
+            <Button 
+              variant="outline" 
+              className="border-2"
+              onClick={() => setSelectedCategory('Все')}
+            >
+              <Icon name="X" size={18} className="mr-2" />
+              Сбросить фильтр
+            </Button>
+          )}
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          {materials.map((material, idx) => (
+        {filteredMaterials.length === 0 ? (
+          <Card className="p-12 text-center">
+            <Icon name="Search" size={48} className="mx-auto mb-4 text-gray-400" />
+            <h4 className="text-xl font-semibold mb-2">Материалы не найдены</h4>
+            <p className="text-gray-600 mb-4">Попробуйте изменить фильтр или поисковый запрос</p>
+            <Button onClick={() => { setSelectedCategory('Все'); setSearchQuery(''); }}>
+              Сбросить фильтры
+            </Button>
+          </Card>
+        ) : (
+          <div className="grid md:grid-cols-2 gap-6">
+            {filteredMaterials.map((material, idx) => (
             <Card
               key={material.id}
               className="hover:shadow-2xl transition-all duration-300 cursor-pointer group animate-fade-in"
@@ -250,8 +323,9 @@ const Index = () => {
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* CTA Section */}
